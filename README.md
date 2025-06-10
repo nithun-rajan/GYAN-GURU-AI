@@ -1,4 +1,4 @@
-markdown# Gyan Guru AI 🕉️
+ Gyan Guru AI 🕉️
 
 An intelligent tutoring and spiritual guidance chatbot powered by LangGraph, OpenAI, and FAISS vector search. Gyan Guru AI serves as both an educational tutor and a knowledgeable guide for Swaminarayan religious teachings.
 
