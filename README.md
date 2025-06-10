@@ -252,4 +252,3 @@ Check the documentation wiki
 
 Made with ❤️ for spiritual learning and educational excellence
 Jai Swaminarayan 🙏
-RetryClaude does not have the ability to run the code it generates yet.Claude can make mistakes. Please double-check responses.
