@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 800px;
+    }
+    #chat-container {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    .user-message {
+      background-color: #e3f2fd;
+      text-align: right;
+    }
+    .bot-message {
+      background-color: #f5f5f5;
+      text-align: left;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 5px;
+    }
+    button {
+      padding: 5px 10px;
+    }
+    .markdown-body {
+      text-align: left;
+    }
+  </style>
+
+  <!-- KaTeX CSS for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+</head>
+<body>
+  <h1>Chatbot Test</h1>
+  <div id="chat-container"></div>
+  <form id="query-form">
+    <input type="text" id="session-id" placeholder="Session ID (e.g., user1)" value="user1">
+    <input type="text" id="query-input" placeholder="Type your query here">
+    <input type="file" id="file-input" accept="image/*, application/pdf">
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <script>
+    function renderMarkdownWithMath(text) {
+      const markdownHtml = marked.parse(text);
+      const container = document.createElement('div');
+      container.innerHTML = markdownHtml;
+
+      // Render KaTeX math in the converted HTML
+      renderMathInElement(container, {
+        delimiters: [
+          {left: "\\(", right: "\\)", display: false},
+          {left: "$$", right: "$$", display: true},
+        ],
+        throwOnError: false
+      });
+
+      return container.innerHTML;
+    }
+
+    // Convert ( LaTeX code ) to \( LaTeX code \)
+    function preprocessMathSyntax(text) {
+      return text.replace(/\(([^()]*\\[^()]*)\)/g, (_, math) => `\\(${math}\\)`);
+    }
+
+    function addMessage(message, isUser = false) {
+      const chatContainer = document.getElementById('chat-container');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+
+      const contentDiv = document.createElement('div');
+      contentDiv.classList.add('markdown-body');
+      contentDiv.innerHTML = renderMarkdownWithMath(preprocessMathSyntax(message));
+
+      messageDiv.appendChild(contentDiv);
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    document.getElementById('query-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const query = document.getElementById('query-input').value.trim();
+      const sessionId = document.getElementById('session-id').value.trim() || 'default';
+      const fileInput = document.getElementById('file-input');
+      const file = fileInput.files[0];
+
+      if (!query && !file) {
+        addMessage("Please enter a query or upload a file.", true);
+        return;
+      }
+
+      if (query) addMessage(query, true);
+      if (file) addMessage(`Uploaded file: ${file.name}`, true);
+
+      const formData = new FormData();
+      formData.append('query', query);
+      formData.append('session_id', sessionId);
+      if (file) formData.append('file', file);
+
+      try {
+        const response = await fetch('http://127.0.0.1:8001/query', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+        const data = await response.json();
+        addMessage(data.response);
+      } catch (error) {
+        addMessage(`Error: ${error.message}`);
+      }
+
+      document.getElementById('query-input').value = '';
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
